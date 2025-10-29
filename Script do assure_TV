@@ -1,0 +1,248 @@
+-- Painel do assure_TV COMPLETO SEM ESP + FPS
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+local Camera = workspace.CurrentCamera
+
+-- Variáveis
+local humanoid
+local speedAtivo, jumpAtivo, infJumpAtivo, noclipAtivo = false,false,false,false
+local lastGravity = nil
+local minimized = false
+
+-- Função para pegar humanoid
+local function getHumanoid()
+	if player.Character then
+		humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+	end
+end
+getHumanoid()
+player.CharacterAdded:Connect(getHumanoid)
+
+-- Criar GUI
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "PainelAssureTV"
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0,280,0,240)
+Frame.Position = UDim2.new(0.35,0,0.35,0)
+Frame.BackgroundColor3 = Color3.fromRGB(200,70,70)
+Frame.Active = true
+Frame.Draggable = true
+
+local Titulo = Instance.new("TextLabel", Frame)
+Titulo.Size = UDim2.new(1,-40,0,35)
+Titulo.Position = UDim2.new(0,10,0,0)
+Titulo.Text = "Painel do assure_TV"
+Titulo.TextColor3 = Color3.fromRGB(240,240,240)
+Titulo.BackgroundTransparency = 1
+Titulo.TextScaled = true
+Titulo.Font = Enum.Font.GothamBold
+
+local Fechar = Instance.new("TextButton", Frame)
+Fechar.Size = UDim2.new(0,30,0,30)
+Fechar.Position = UDim2.new(1,-35,0,5)
+Fechar.Text = "X"
+Fechar.TextColor3 = Color3.fromRGB(240,240,240)
+Fechar.BackgroundColor3 = Color3.fromRGB(130,30,30)
+Fechar.Font = Enum.Font.GothamBold
+
+-- FPS no canto inferior esquerdo
+local FPSLabel = Instance.new("TextLabel", Frame)
+FPSLabel.Size = UDim2.new(0,100,0,25)
+FPSLabel.Position = UDim2.new(0,10,1,-30)
+FPSLabel.BackgroundTransparency = 0.3
+FPSLabel.BackgroundColor3 = Color3.fromRGB(50,50,50)
+FPSLabel.TextColor3 = Color3.fromRGB(240,240,240)
+FPSLabel.TextScaled = true
+FPSLabel.Font = Enum.Font.GothamBold
+FPSLabel.Text = "FPS: 0"
+
+-- Scroller
+local Scroller = Instance.new("ScrollingFrame", Frame)
+Scroller.Size = UDim2.new(1,-20,1,-55)
+Scroller.Position = UDim2.new(0,10,0,40)
+Scroller.CanvasSize = UDim2.new(0,0,0,0)
+Scroller.ScrollBarThickness = 6
+Scroller.BackgroundColor3 = Color3.fromRGB(30,30,30)
+local UIList = Instance.new("UIListLayout", Scroller)
+UIList.Padding = UDim.new(0,8)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	Scroller.CanvasSize = UDim2.new(0,0,0,UIList.AbsoluteContentSize.Y + 10)
+end)
+
+-- Funções criar botão e textbox
+local function createButton(text)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0,200,0,30)
+	b.BackgroundColor3 = Color3.fromRGB(160,60,60)
+	b.TextColor3 = Color3.fromRGB(240,240,240)
+	b.Font = Enum.Font.GothamBold
+	b.Text = text
+	b.BorderSizePixel = 1
+	b.BorderColor3 = Color3.fromRGB(80,80,80)
+	b.Parent = Scroller
+	return b
+end
+
+local function createTextBox(ph)
+	local tb = Instance.new("TextBox")
+	tb.Size = UDim2.new(0,200,0,30)
+	tb.BackgroundColor3 = Color3.fromRGB(100,40,40)
+	tb.TextColor3 = Color3.fromRGB(240,240,240)
+	tb.PlaceholderText = ph
+	tb.ClearTextOnFocus = false
+	tb.Font = Enum.Font.Gotham
+	tb.Parent = Scroller
+	return tb
+end
+
+-- Função NoClip
+local function setCollision(can)
+	if player.Character then
+		for _,p in pairs(player.Character:GetDescendants()) do
+			if p:IsA("BasePart") then p.CanCollide = can end
+		end
+	end
+end
+
+-- BOTÕES E FUNCIONALIDADES
+
+-- Speed
+local VelBox = createTextBox("Velocidade do Speed...")
+local SpeedBtn = createButton("Ativar Speed")
+SpeedBtn.MouseButton1Click:Connect(function()
+	if not humanoid then return end
+	local s = tonumber(VelBox.Text)
+	if not s then return end
+	if speedAtivo then
+		humanoid.WalkSpeed = 16
+		speedAtivo = false
+		SpeedBtn.Text = "Ativar Speed"
+	else
+		humanoid.WalkSpeed = s
+		speedAtivo = true
+		SpeedBtn.Text = "Desativar Speed"
+	end
+end)
+
+-- Jump
+local JumpBox = createTextBox("Altura do Pulo...")
+local JumpBtn = createButton("Ativar Jump")
+JumpBtn.MouseButton1Click:Connect(function()
+	if not humanoid then return end
+	local j = tonumber(JumpBox.Text)
+	if not j then return end
+	if jumpAtivo then
+		humanoid.JumpPower = 50
+		jumpAtivo = false
+		JumpBtn.Text = "Ativar Jump"
+	else
+		humanoid.UseJumpPower = true
+		humanoid.JumpPower = j
+		jumpAtivo = true
+		JumpBtn.Text = "Desativar Jump"
+	end
+end)
+
+-- Infinite Jump
+local InfBox = createTextBox("Força do pulo infinito...")
+local InfBtn = createButton("Ativar Infinite Jump")
+infJumpAtivo = false
+InfBtn.MouseButton1Click:Connect(function() 
+	infJumpAtivo = not infJumpAtivo 
+	InfBtn.Text = infJumpAtivo and "Desativar Infinite Jump" or "Ativar Infinite Jump" 
+end)
+UIS.JumpRequest:Connect(function()
+	if infJumpAtivo and humanoid then
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		humanoid.JumpPower = tonumber(InfBox.Text) or 50
+	end
+end)
+
+-- NoClip
+local NoClipBtn = createButton("Ativar NoClip")
+NoClipBtn.MouseButton1Click:Connect(function()
+	noclipAtivo = not noclipAtivo
+	NoClipBtn.Text = noclipAtivo and "Desativar NoClip" or "Ativar NoClip"
+	setCollision(not noclipAtivo and true or false)
+end)
+RunService.Stepped:Connect(function()
+	if noclipAtivo then setCollision(false) end
+end)
+
+-- Teleport Players
+local TeleportBtn = createButton("Teleportar Jogador")
+local TeleList = Instance.new("Frame", Scroller)
+TeleList.Size = UDim2.new(1,0,0,200)
+TeleList.BackgroundColor3 = Color3.fromRGB(30,30,30)
+TeleList.Visible = false
+local TL_Layout = Instance.new("UIListLayout", TeleList)
+TeleportBtn.MouseButton1Click:Connect(function()
+	TeleList.Visible = not TeleList.Visible
+	for _,c in pairs(TeleList:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local b = createButton(plr.Name)
+			b.Parent = TeleList
+			b.MouseButton1Click:Connect(function()
+				if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+					player.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
+				end
+			end)
+		end
+	end
+end)
+
+-- Gravity
+local GravBox = createTextBox("Gravidade...")
+local GravBtn = createButton("Ativar Gravidade")
+GravBtn.MouseButton1Click:Connect(function()
+	local g = tonumber(GravBox.Text)
+	if not g then return end
+	if lastGravity then
+		workspace.Gravity = 196.2
+		lastGravity = nil
+		GravBtn.Text = "Ativar Gravidade"
+	else
+		workspace.Gravity = g
+		lastGravity = g
+		GravBtn.Text = "Desativar Gravidade"
+	end
+end)
+
+-- Scripts externos
+local HitBtn, FlyBtn, IYBtn = createButton("Hitboxes Dano"), createButton("Fly"), createButton("Infinite Yield")
+HitBtn.MouseButton1Click:Connect(function() loadstring(game:HttpGet("https://pastefy.app/ItfO0tdg/raw"))() end)
+FlyBtn.MouseButton1Click:Connect(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Gui-Fly-v3-37111"))() end)
+IYBtn.MouseButton1Click:Connect(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Infinite-Yield-43437"))() end)
+
+-- Minimizar
+Fechar.MouseButton1Click:Connect(function()
+	if minimized then
+		Frame:TweenSize(UDim2.new(0,280,0,240),"Out","Quad",0.25,true)
+		Scroller.Visible=true
+		minimized=false
+	else
+		Frame:TweenSize(UDim2.new(0,220,0,60),"Out","Quad",0.25,true)
+		Scroller.Visible=false
+		minimized=true
+	end
+end)
+
+-- FPS Counter
+local lastTime = tick()
+local frameCount = 0
+RunService.RenderStepped:Connect(function(delta)
+	frameCount = frameCount + 1
+	local now = tick()
+	if now - lastTime >= 1 then
+		FPSLabel.Text = "FPS: "..frameCount
+		frameCount = 0
+		lastTime = now
+	end
+end)
