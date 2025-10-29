@@ -1,0 +1,229 @@
+-- Player ESP Script Atualizado - Versão Final Funcional
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local espStatus = false
+local espItems = {}
+
+-- HEAD DOT / BOX ESP
+local headDotStatus = false
+local boxESPStatus = false
+local headDotItems = {}
+local boxESPItems = {}
+
+-- UI Setup
+local ui = Instance.new("ScreenGui")
+ui.Parent = game:GetService("CoreGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 250, 0, 230)
+main.Position = UDim2.new(0, 10, 0, 10)
+main.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+main.Active = true
+main.Draggable = true
+main.Parent = ui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 6)
+corner.Parent = main
+
+local header = Instance.new("TextLabel")
+header.Size = UDim2.new(1, 0, 0, 35)
+header.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+header.TextColor3 = Color3.fromRGB(255, 255, 255)
+header.Text = "Player ESP"
+header.Font = Enum.Font.GothamSemibold
+header.Parent = main
+
+-- Status Label
+local statusText = Instance.new("TextLabel")
+statusText.Size = UDim2.new(0.8, 0, 0, 25)
+statusText.Position = UDim2.new(0.1, 0, 0.25, 0)
+statusText.BackgroundTransparency = 1
+statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusText.Text = "Status: Disabled"
+statusText.Font = Enum.Font.Gotham
+statusText.Parent = main
+
+-- Função ESP
+local function addESP(target)
+	if target == player or not target.Character then return end
+	local root = target.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "ESPHighlight"
+	highlight.FillColor = Color3.fromRGB(255, 50, 50)
+	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+	highlight.FillTransparency = 0.6
+	highlight.Parent = target.Character
+
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "ESPInfo"
+	billboard.Size = UDim2.new(0, 200, 0, 40)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)
+	billboard.AlwaysOnTop = true
+	billboard.Adornee = root
+	billboard.Parent = target.Character
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = target.Name
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextStrokeTransparency = 0
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 14
+	label.Parent = billboard
+
+	espItems[target] = {highlight, billboard}
+end
+
+local function removeESP(target)
+	if espItems[target] then
+		for _, item in pairs(espItems[target]) do
+			if item then item:Destroy() end
+		end
+		espItems[target] = nil
+	end
+end
+
+local function toggleESP()
+	espStatus = not espStatus
+	if espStatus then
+		statusText.Text = "Status: Enabled"
+		for _, p in pairs(Players:GetPlayers()) do
+			addESP(p)
+		end
+	else
+		statusText.Text = "Status: Disabled"
+		for target, _ in pairs(espItems) do
+			removeESP(target)
+		end
+		espItems = {}
+	end
+end
+
+-- Atualiza Distância
+RunService.RenderStepped:Connect(function()
+	if espStatus then
+		for target, parts in pairs(espItems) do
+			if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local distance = (target.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+				local label = parts[2]:FindFirstChildOfClass("TextLabel")
+				if label then
+					label.Text = string.format("%s - %dm", target.Name, math.floor(distance))
+				end
+			end
+		end
+	end
+end)
+
+-- BOTÕES
+local function createButton(text, pos, color)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.8, 0, 0, 35)
+	btn.Position = pos
+	btn.BackgroundColor3 = color
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Text = text
+	btn.Font = Enum.Font.GothamBold
+	btn.Parent = main
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 5)
+	corner.Parent = btn
+	return btn
+end
+
+-- Toggle ESP
+local toggleBtn = createButton("ENABLE ESP", UDim2.new(0.1, 0, 0.35, 0), Color3.fromRGB(200, 50, 50))
+toggleBtn.MouseButton1Click:Connect(function()
+	toggleESP()
+	if espStatus then
+		toggleBtn.Text = "DISABLE ESP"
+		toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+	else
+		toggleBtn.Text = "ENABLE ESP"
+		toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	end
+end)
+
+-- Head Dot
+local headDotBtn = createButton("HEAD DOT OFF", UDim2.new(0.1, 0, 0.55, 0), Color3.fromRGB(100, 100, 200))
+headDotBtn.MouseButton1Click:Connect(function()
+	headDotStatus = not headDotStatus
+	headDotBtn.Text = headDotStatus and "HEAD DOT ON" or "HEAD DOT OFF"
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+			if headDotStatus and not headDotItems[p] then
+				local dot = Instance.new("BillboardGui")
+				dot.Name = "HeadDot"
+				dot.Size = UDim2.new(0, 10, 0, 10)
+				dot.StudsOffset = Vector3.new(0, 2.5, 0)
+				dot.AlwaysOnTop = true
+				dot.Adornee = p.Character.Head
+				dot.Parent = p.Character
+				local circle = Instance.new("Frame")
+				circle.Size = UDim2.new(1, 0, 1, 0)
+				circle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+				circle.BorderSizePixel = 0
+				circle.Parent = dot
+				headDotItems[p] = dot
+			elseif not headDotStatus and headDotItems[p] then
+				headDotItems[p]:Destroy()
+				headDotItems[p] = nil
+			end
+		end
+	end
+end)
+
+-- Box ESP
+local boxBtn = createButton("BOX ESP OFF", UDim2.new(0.1, 0, 0.7, 0), Color3.fromRGB(50, 200, 200))
+boxBtn.MouseButton1Click:Connect(function()
+	boxESPStatus = not boxESPStatus
+	boxBtn.Text = boxESPStatus and "BOX ESP ON" or "BOX ESP OFF"
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			if boxESPStatus and not boxESPItems[p] then
+				local box = Instance.new("BoxHandleAdornment")
+				box.Adornee = p.Character.HumanoidRootPart
+				box.AlwaysOnTop = true
+				box.Size = Vector3.new(4, 6, 2)
+				box.ZIndex = 10
+				box.Color3 = Color3.fromRGB(0, 255, 0)
+				box.Transparency = 0.5
+				box.Parent = p.Character
+				boxESPItems[p] = box
+			elseif not boxESPStatus and boxESPItems[p] then
+				boxESPItems[p]:Destroy()
+				boxESPItems[p] = nil
+			end
+		end
+	end
+end)
+
+-- Botão fechar
+local closeBtn = createButton("X", UDim2.new(0.85, 0, 0, 0), Color3.fromRGB(200, 50, 50))
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.TextSize = 18
+closeBtn.MouseButton1Click:Connect(function()
+	ui:Destroy()
+end)
+
+-- Atualiza novos jogadores automaticamente
+Players.PlayerAdded:Connect(function(p)
+	p.CharacterAdded:Connect(function()
+		if espStatus then addESP(p) end
+		if headDotStatus and p.Character:FindFirstChild("Head") then headDotBtn.MouseButton1Click:Wait() end
+		if boxESPStatus and p.Character:FindFirstChild("HumanoidRootPart") then boxBtn.MouseButton1Click:Wait() end
+	end)
+end)
+
+Players.PlayerRemoving:Connect(function(p)
+	removeESP(p)
+	if headDotItems[p] then headDotItems[p]:Destroy() headDotItems[p] = nil end
+	if boxESPItems[p] then boxESPItems[p]:Destroy() boxESPItems[p] = nil end
+end)
