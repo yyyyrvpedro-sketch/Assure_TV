@@ -1,4 +1,4 @@
--- Painel do assure_TV COMPLETO SEM ESP + FPS
+-- Painel do assure_TV COMPLETO SEM ESP + FPS + BOTÃO DE ESPS
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
@@ -153,9 +153,9 @@ end)
 local InfBox = createTextBox("Força do pulo infinito...")
 local InfBtn = createButton("Ativar Infinite Jump")
 infJumpAtivo = false
-InfBtn.MouseButton1Click:Connect(function() 
-	infJumpAtivo = not infJumpAtivo 
-	InfBtn.Text = infJumpAtivo and "Desativar Infinite Jump" or "Ativar Infinite Jump" 
+InfBtn.MouseButton1Click:Connect(function()
+	infJumpAtivo = not infJumpAtivo
+	InfBtn.Text = infJumpAtivo and "Desativar Infinite Jump" or "Ativar Infinite Jump"
 end)
 UIS.JumpRequest:Connect(function()
 	if infJumpAtivo and humanoid then
@@ -221,6 +221,12 @@ HitBtn.MouseButton1Click:Connect(function() loadstring(game:HttpGet("https://pas
 FlyBtn.MouseButton1Click:Connect(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Gui-Fly-v3-37111"))() end)
 IYBtn.MouseButton1Click:Connect(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Infinite-Yield-43437"))() end)
 
+-- ✅ NOVO BOTÃO DE ESPS
+local ESPBtn = createButton("Botão de ESPS")
+ESPBtn.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/yyyyrvpedro-sketch/Assure_TV/refs/heads/main/Esp"))()
+end)
+
 -- Minimizar
 Fechar.MouseButton1Click:Connect(function()
 	if minimized then
@@ -237,11 +243,11 @@ end)
 -- FPS Counter
 local lastTime = tick()
 local frameCount = 0
-RunService.RenderStepped:Connect(function(delta)
-	frameCount = frameCount + 1
+RunService.RenderStepped:Connect(function()
+	frameCount += 1
 	local now = tick()
 	if now - lastTime >= 1 then
-		FPSLabel.Text = "FPS: "..frameCount
+		FPSLabel.Text = "FPS: " .. frameCount
 		frameCount = 0
 		lastTime = now
 	end
