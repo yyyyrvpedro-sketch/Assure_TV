@@ -1,4 +1,4 @@
--- Player ESP Script Atualizado - Versão Final Funcional
+-- Player ESP Script Atualizado - Versão Final Funcional + Botão Minimizar (BUG FIX)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
@@ -6,7 +6,6 @@ local player = Players.LocalPlayer
 local espStatus = false
 local espItems = {}
 
--- HEAD DOT / BOX ESP
 local headDotStatus = false
 local boxESPStatus = false
 local headDotItems = {}
@@ -120,7 +119,7 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
--- BOTÕES
+-- Função para criar botões
 local function createButton(text, pos, color)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0.8, 0, 0, 35)
@@ -206,19 +205,75 @@ boxBtn.MouseButton1Click:Connect(function()
 end)
 
 -- Botão fechar
-local closeBtn = createButton("X", UDim2.new(0.85, 0, 0, 0), Color3.fromRGB(200, 50, 50))
+local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(0.85, 0, 0, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 18
+closeBtn.Parent = main
+local closeCorner = Instance.new("UICorner", closeBtn)
+closeCorner.CornerRadius = UDim.new(0, 5)
 closeBtn.MouseButton1Click:Connect(function()
 	ui:Destroy()
+end)
+
+-- BOTÃO MINIMIZAR (CORRIGIDO)
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+minimizeBtn.Position = UDim2.new(0.7, 0, 0, 0)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBtn.Text = "-"
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.TextSize = 24
+minimizeBtn.Parent = main
+local minimizeCorner = Instance.new("UICorner", minimizeBtn)
+minimizeCorner.CornerRadius = UDim.new(0, 5)
+
+local minimized = false
+local fullSize = main.Size
+
+-- Atualiza fullSize caso o usuário arraste o painel (só quando não minimizado)
+main:GetPropertyChangedSignal("Size"):Connect(function()
+	if not minimized then
+		fullSize = main.Size
+	end
+end)
+
+local function setUIPartVisibility(visible)
+	for _, child in pairs(main:GetChildren()) do
+		-- só mexe na propriedade Visible para objetos que a possuem
+		if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("Frame") or child:IsA("ImageLabel") or child:IsA("ImageButton") then
+			-- header, close e minimize sempre ficam visíveis na versão minimizada
+			if child == header or child == closeBtn or child == minimizeBtn then
+				child.Visible = true
+			else
+				child.Visible = visible
+			end
+		end
+	end
+end
+
+minimizeBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		-- minimizar: reduz a altura e esconde controles (mantém header, X e -)
+		main.Size = UDim2.new(0, 250, 0, 35)
+		setUIPartVisibility(false)
+	else
+		-- restaurar: volta ao tamanho cheio e reexibe controles
+		main.Size = fullSize
+		setUIPartVisibility(true)
+	end
 end)
 
 -- Atualiza novos jogadores automaticamente
 Players.PlayerAdded:Connect(function(p)
 	p.CharacterAdded:Connect(function()
 		if espStatus then addESP(p) end
-		if headDotStatus and p.Character:FindFirstChild("Head") then headDotBtn.MouseButton1Click:Wait() end
-		if boxESPStatus and p.Character:FindFirstChild("HumanoidRootPart") then boxBtn.MouseButton1Click:Wait() end
 	end)
 end)
 
