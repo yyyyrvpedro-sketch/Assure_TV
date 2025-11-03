@@ -1,0 +1,417 @@
+-- Painel ESP com Bola 2D + ESP Quadrado (2D) — ESP Box removido
+-- Autor: ChatGPT (GPT-5)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+
+local player = Players.LocalPlayer
+
+-- GUI principal
+local gui = Instance.new("ScreenGui")
+gui.Name = "PainelESP"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Painel principal
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 260, 0, 260)
+panel.Position = UDim2.new(0.05, 0, 0.1, 0)
+panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+panel.Active = true
+panel.Draggable = true
+panel.Parent = gui
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 25)
+title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+title.Text = "Painel ESP"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.Parent = panel
+
+-- Botões de fechar e minimizar
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Position = UDim2.new(1, -25, 0, 0)
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 18
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.Parent = panel
+
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 25, 0, 25)
+minimizeBtn.Position = UDim2.new(1, -50, 0, 0)
+minimizeBtn.Text = "–"
+minimizeBtn.Font = Enum.Font.SourceSansBold
+minimizeBtn.TextSize = 18
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
+minimizeBtn.Parent = panel
+
+local minimized = false
+local panelFullSize = panel.Size
+minimizeBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	for _, child in ipairs(panel:GetChildren()) do
+		if child ~= title and child ~= minimizeBtn and child ~= closeBtn then
+			child.Visible = not minimized
+		end
+	end
+	panel.Size = minimized and UDim2.new(0, 260, 0, 25) or panelFullSize
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+
+-- Botão ESP Bola
+local buttonBola = Instance.new("TextButton")
+buttonBola.Size = UDim2.new(0.8, 0, 0, 40)
+buttonBola.Position = UDim2.new(0.1, 0, 0.12, 0)
+buttonBola.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+buttonBola.TextColor3 = Color3.new(1, 1, 1)
+buttonBola.Font = Enum.Font.SourceSansBold
+buttonBola.TextSize = 22
+buttonBola.Text = "ESP Bola"
+buttonBola.Parent = panel
+
+-- Botão ESP Quadrado
+local buttonQuadrado = Instance.new("TextButton")
+buttonQuadrado.Size = UDim2.new(0.8, 0, 0, 40)
+buttonQuadrado.Position = UDim2.new(0.1, 0, 0.32, 0)
+buttonQuadrado.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+buttonQuadrado.TextColor3 = Color3.new(1, 1, 1)
+buttonQuadrado.Font = Enum.Font.SourceSansBold
+buttonQuadrado.TextSize = 22
+buttonQuadrado.Text = "ESP Quadrado"
+buttonQuadrado.Parent = panel
+
+-- Botão RGB
+local buttonRGB = Instance.new("TextButton")
+buttonRGB.Size = UDim2.new(0.8, 0, 0, 40)
+buttonRGB.Position = UDim2.new(0.1, 0, 0.52, 0)
+buttonRGB.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+buttonRGB.TextColor3 = Color3.new(1, 1, 1)
+buttonRGB.Font = Enum.Font.SourceSansBold
+buttonRGB.TextSize = 22
+buttonRGB.Text = "Ativar RGB"
+buttonRGB.Parent = panel
+
+-- Label e slider (controle do tamanho da bola)
+local sliderLabel = Instance.new("TextLabel")
+sliderLabel.Size = UDim2.new(1, 0, 0, 18)
+sliderLabel.Position = UDim2.new(0, 0, 0.72, 0)
+sliderLabel.BackgroundTransparency = 1
+sliderLabel.Text = "Tamanho da Bola"
+sliderLabel.TextColor3 = Color3.new(1, 1, 1)
+sliderLabel.Font = Enum.Font.SourceSans
+sliderLabel.TextSize = 16
+sliderLabel.Parent = panel
+
+local sliderOuter = Instance.new("Frame")
+sliderOuter.Size = UDim2.new(0.7, 0, 0, 14)
+sliderOuter.Position = UDim2.new(0.15, 0, 0.78, 0)
+sliderOuter.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+sliderOuter.BorderSizePixel = 0
+sliderOuter.Parent = panel
+
+local minusBtn = Instance.new("TextButton")
+minusBtn.Size = UDim2.new(0, 28, 0, 28)
+minusBtn.Position = UDim2.new(0.02, 0, 0.76, -7)
+minusBtn.Text = "−"
+minusBtn.Font = Enum.Font.SourceSansBold
+minusBtn.TextSize = 22
+minusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minusBtn.TextColor3 = Color3.new(1, 1, 1)
+minusBtn.Parent = panel
+
+local plusBtn = Instance.new("TextButton")
+plusBtn.Size = UDim2.new(0, 28, 0, 28)
+plusBtn.Position = UDim2.new(0.9, 0, 0.76, -7)
+plusBtn.Text = "+"
+plusBtn.Font = Enum.Font.SourceSansBold
+plusBtn.TextSize = 22
+plusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+plusBtn.TextColor3 = Color3.new(1, 1, 1)
+plusBtn.Parent = panel
+
+-- Handle do slider
+local handle = Instance.new("Frame")
+handle.Size = UDim2.new(0, 18, 1.8, 0)
+handle.AnchorPoint = Vector2.new(0.5, 0.5)
+handle.Position = UDim2.new(0.5, 0, 0.5, 0)
+handle.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+handle.BorderSizePixel = 0
+handle.Parent = sliderOuter
+
+-- Bola 2D central
+local circle = Instance.new("Frame")
+circle.AnchorPoint = Vector2.new(0.5, 0.5)
+circle.Size = UDim2.new(0, 200, 0, 200)
+circle.Position = UDim2.new(0.5, 0, 0.5, 0)
+circle.BackgroundTransparency = 1
+circle.BorderSizePixel = 0
+circle.Visible = false
+circle.Parent = gui
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 6
+stroke.Color = Color3.fromRGB(255, 0, 0)
+stroke.Parent = circle
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1, 0)
+corner.Parent = circle
+
+-- Variáveis de controle
+local espBolaAtivo = false
+local espQuadradoAtivo = false
+local rgbAtivo = false
+local focusPlayer = nil
+local quadFrames = {}
+
+-- Funções de tamanho da bola
+local function getMaxSize()
+	return math.min(Camera.ViewportSize.X, Camera.ViewportSize.Y)
+end
+local minSize = 20
+local maxSize = getMaxSize()
+local ballSize = 200
+
+local function sizeToRel(size)
+	return (size - minSize) / (maxSize - minSize)
+end
+local function relToSize(rel)
+	return minSize + (maxSize - minSize) * rel
+end
+local function updateHandleFromSize()
+	maxSize = getMaxSize()
+	ballSize = math.clamp(ballSize, minSize, maxSize)
+	-- evita divisão por zero
+	local denom = (maxSize - minSize)
+	local rel = denom > 0 and ((ballSize - minSize) / denom) or 0
+	local sliderAbs = math.max(1, sliderOuter.AbsoluteSize.X)
+	local x = rel * sliderAbs
+	handle.Position = UDim2.new(0, x, 0.5, 0)
+	circle.Size = UDim2.new(0, ballSize, 0, ballSize)
+	circle.Position = UDim2.new(0.5, 0, 0.5, 0)
+end
+
+-- Inicializa handle (aguarda AbsoluteSize disponível)
+sliderOuter:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateHandleFromSize)
+Camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateHandleFromSize)
+updateHandleFromSize()
+
+-- Toggle ESP Bola
+local function toggleESPBola()
+	espBolaAtivo = not espBolaAtivo
+	if espBolaAtivo then
+		buttonBola.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+		buttonBola.Text = "Desligar ESP Bola"
+		circle.Visible = true
+	else
+		buttonBola.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+		buttonBola.Text = "ESP Bola"
+		circle.Visible = false
+		focusPlayer = nil
+	end
+end
+buttonBola.MouseButton1Click:Connect(toggleESPBola)
+
+-- Toggle ESP Quadrado
+buttonQuadrado.MouseButton1Click:Connect(function()
+	espQuadradoAtivo = not espQuadradoAtivo
+	buttonQuadrado.BackgroundColor3 = espQuadradoAtivo and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 50, 50)
+	if not espQuadradoAtivo then
+		for _, f in pairs(quadFrames) do
+			f:Destroy()
+		end
+		quadFrames = {}
+	end
+end)
+
+-- Toggle RGB
+local hue = 0
+local function getRGBColor()
+	hue = (hue + 0.005) % 1
+	return Color3.fromHSV(hue, 1, 1)
+end
+
+buttonRGB.MouseButton1Click:Connect(function()
+	rgbAtivo = not rgbAtivo
+	if rgbAtivo then
+		buttonRGB.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+		buttonRGB.Text = "Desligar RGB"
+	else
+		buttonRGB.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+		buttonRGB.Text = "Ativar RGB"
+		-- volta as cores para vermelho
+		stroke.Color = Color3.fromRGB(255, 0, 0)
+		for _, f in pairs(quadFrames) do
+			if f:FindFirstChildOfClass("UIStroke") then
+				f:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(255, 0, 0)
+			end
+		end
+	end
+end)
+
+-- Controle do slider (botões + drag)
+local step = 0.06
+local function changeByStep(delta)
+	local denom = (maxSize - minSize)
+	local rel = denom > 0 and ((ballSize - minSize) / denom) or 0
+	rel = math.clamp(rel + delta, 0, 1)
+	ballSize = math.floor(relToSize(rel))
+	updateHandleFromSize()
+end
+minusBtn.MouseButton1Click:Connect(function() changeByStep(-step) end)
+plusBtn.MouseButton1Click:Connect(function() changeByStep(step) end)
+
+local dragging = false
+sliderOuter.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+end)
+sliderOuter.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local mouseX = UserInputService:GetMouseLocation().X
+		local absPos = sliderOuter.AbsolutePosition.X
+		local absSize = math.max(1, sliderOuter.AbsoluteSize.X)
+		local rel = math.clamp((mouseX - absPos) / absSize, 0, 1)
+		ballSize = math.floor(relToSize(rel))
+		updateHandleFromSize()
+	end
+end)
+
+-- Função auxiliar para bounding box (se necessário futuramente)
+local function getBoundingBox(character)
+	local minVec, maxVec
+	for _, part in ipairs(character:GetChildren()) do
+		if part:IsA("BasePart") then
+			local pos, visible = Camera:WorldToViewportPoint(part.Position)
+			if visible then
+				local x, y = pos.X, pos.Y
+				if not minVec then
+					minVec = Vector2.new(x, y)
+					maxVec = Vector2.new(x, y)
+				else
+					minVec = Vector2.new(math.min(minVec.X, x), math.min(minVec.Y, y))
+					maxVec = Vector2.new(math.max(maxVec.X, x), math.max(maxVec.Y, y))
+				end
+			end
+		end
+	end
+	return minVec, maxVec
+end
+
+-- Função para pegar posição da cabeça na tela
+local function getHeadScreenPos(character)
+	local head = character:FindFirstChild("Head")
+	if head then
+		local pos, visible = Camera:WorldToViewportPoint(head.Position)
+		if visible then
+			return Vector2.new(pos.X, pos.Y)
+		end
+	end
+	return nil
+end
+
+-- Loop principal
+RunService.RenderStepped:Connect(function()
+	-- Atualiza cor RGB se ativo
+	local color = rgbAtivo and getRGBColor() or Color3.fromRGB(255, 0, 0)
+	if rgbAtivo then
+		stroke.Color = color
+	else
+		-- stroke já setado ao desligar RGB, mas garantir
+		stroke.Color = Color3.fromRGB(255, 0, 0)
+	end
+
+	-- ESP Bola: procura jogador dentro da bola e olha pra ele
+	if espBolaAtivo then
+		local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+		local radius = ballSize / 2
+		local found = false
+
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+				local pos, onScreen = Camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+				if onScreen then
+					local dist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+					if dist <= radius then
+						focusPlayer = plr
+						found = true
+						break
+					end
+				end
+			end
+		end
+
+		if not found then
+			focusPlayer = nil
+		end
+
+		if focusPlayer and focusPlayer.Character and focusPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local targetPos = focusPlayer.Character.HumanoidRootPart.Position
+			-- mantém a câmera olhando pro jogador encontrado
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+		end
+	end
+
+	-- Atualiza visibilidade/cor da bola
+	if circle then
+		circle.Visible = espBolaAtivo
+		-- stroke já atualizado por RGB
+	end
+
+	-- ESP Quadrado: cria/atualiza quadrados na cabeça dos jogadores
+	if espQuadradoAtivo then
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= player and plr.Character then
+				local headPos = getHeadScreenPos(plr.Character)
+				if headPos then
+					local square = quadFrames[plr]
+					if not square then
+						square = Instance.new("Frame")
+						square.Size = UDim2.new(0, 28, 0, 28)
+						square.BorderSizePixel = 0
+						square.BackgroundTransparency = 1
+						local strokeQ = Instance.new("UIStroke")
+						strokeQ.Color = Color3.fromRGB(255, 0, 0)
+						strokeQ.Thickness = 3
+						strokeQ.Parent = square
+						square.Parent = gui
+						quadFrames[plr] = square
+					end
+					square.Visible = true
+					-- centraliza o quadrado na cabeça (ajuste -14 para metade de 28)
+					square.Position = UDim2.new(0, headPos.X - 14, 0, headPos.Y - 14)
+					-- atualiza cor (RGB ou vermelho)
+					local strokeObj = square:FindFirstChildOfClass("UIStroke")
+					if strokeObj then
+						strokeObj.Color = color
+					end
+				else
+					-- se não está visível na tela, esconde o quadrado
+					if quadFrames[plr] then
+						quadFrames[plr].Visible = false
+					end
+				end
+			end
+		end
+	else
+		-- se desligado, destrói os frames
+		for _, f in pairs(quadFrames) do
+			f:Destroy()
+		end
+		quadFrames = {}
+	end
+end)
